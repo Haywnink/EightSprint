@@ -31,20 +31,21 @@ func getTestParcel() Parcel {
 // TestAddGetDelete проверяет добавление, получение и удаление посылки
 func TestAddGetDelete(t *testing.T) {
 
-	db, _ := sql.Open("sqlite", "tracker.db")
-	store := NewParcelStore(db)
+	db, err := sql.Open("sqlite", "tracker.db")
+	require.NoError(t, err)
 	defer db.Close()
 
+	store := NewParcelStore(db)
 	parcel := getTestParcel()
 
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
 
+	parcel.Number = id
+
 	storedParcel, err := store.Get(id)
 	require.NoError(t, err)
-	require.Equal(t, parcel.Client, storedParcel.Client)
-	require.Equal(t, parcel.Status, storedParcel.Status)
-	require.Equal(t, parcel.Address, storedParcel.Address)
+	require.Equal(t, parcel, storedParcel)
 
 	err = store.Delete(id)
 	require.NoError(t, err)
@@ -55,11 +56,13 @@ func TestAddGetDelete(t *testing.T) {
 
 // TestSetAddress проверяет обновление адреса
 func TestSetAddress(t *testing.T) {
-	db, _ := sql.Open("sqlite", "tracker.db")
-	store := NewParcelStore(db)
+	db, err := sql.Open("sqlite", "tracker.db")
+	require.NoError(t, err)
 	defer db.Close()
 
+	store := NewParcelStore(db)
 	parcel := getTestParcel()
+
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
 
@@ -132,9 +135,6 @@ func TestGetByClient(t *testing.T) {
 	for _, parcel := range storedParcels {
 		expectedParcel, exists := parcelMap[parcel.Number]
 		require.True(t, exists)
-		require.Equal(t, expectedParcel.Client, parcel.Client)
-		require.Equal(t, expectedParcel.Status, parcel.Status)
-		require.Equal(t, expectedParcel.Address, parcel.Address)
-		require.Equal(t, expectedParcel.CreatedAt, parcel.CreatedAt)
+		require.Equal(t, expectedParcel, parcel)
 	}
 }
